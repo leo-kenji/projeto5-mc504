@@ -1335,7 +1335,7 @@ extern long do_sys_ftruncate(unsigned int fd, loff_t length, int small);
 static inline long ksys_ftruncate(unsigned int fd, loff_t length)
 {
 	return do_sys_ftruncate(fd, length, 1);
-}
+}	
 
 extern long do_sys_truncate(const char __user *pathname, loff_t length);
 
@@ -1343,6 +1343,8 @@ static inline long ksys_truncate(const char __user *pathname, loff_t length)
 {
 	return do_sys_truncate(pathname, length);
 }
+asmlinkage long sys_getuserweight(int uid);
+asmlinkage long sys_setuserweight(int uid, int weight);
 
 static inline unsigned int ksys_personality(unsigned int personality)
 {

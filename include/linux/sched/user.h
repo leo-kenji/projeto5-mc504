@@ -39,6 +39,8 @@ struct user_struct {
 
 	/* Miscellaneous per-user rate limit */
 	struct ratelimit_state ratelimit;
+	// PRIORIDADE
+	int priority;
 };
 
 extern int uids_sysfs_init(void);
