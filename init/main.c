@@ -1463,7 +1463,8 @@ static int __ref kernel_init(void *unused)
 	numa_default_policy();
 
 	rcu_end_inkernel_boot();
-
+	printk(KERN_ERR "\nn###################################\nGATO:\n   /\\     /\\\n  {  `---'  }\n  {  O   O  }\n  ~~>  V  <~~\n   \\  \\|/  /\n    `-----'__\n    /     \\  `^\\_\n   {       }\\ |\\_\\_   W\n   |  \\_/  |/ /  \\_\\_( )\n    \\__/  /(_E     \\__/\n      (  /\n       MM\n###################################\n\n");
+	
 	do_sysctl_args();
 
 	if (ramdisk_execute_command) {
