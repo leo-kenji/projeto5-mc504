@@ -9,6 +9,12 @@
  
 #include "query_ioctl.h"
  
+// For NULL
+#include <linux/types.h>
+
+#include <linux/slab.h> // For krealloc
+#include <linux/gfp.h> // For krealloc flag
+
 #define FIRST_MINOR 0
 #define MINOR_CNT 1
  
@@ -16,7 +22,8 @@ static dev_t dev;
 static struct cdev c_dev;
 static struct class *cl;
 static int status = 1, dignity = 3, ego = 5;
- 
+static char* texto = NULL; 
+
 static int my_open(struct inode *i, struct file *f)
 {
     return 0;
@@ -32,7 +39,8 @@ static int my_close(struct inode *i, struct file *f)
 static long my_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 {
     query_arg_t q;
- 
+    texto_t t;
+
     switch (cmd)
     {
         case QUERY_GET_VARIABLES:
@@ -58,6 +66,50 @@ static long my_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
             dignity = q.dignity;
             ego = q.ego;
             break;
+
+        case SET_TEXTO:
+            // Limite de 4MB para x86
+            // TODO Fazer a verificação do tamanho
+            int size_string = strlen(((texto_t *)arg)->texto)+1;
+            texto = krealloc(texto,size_string*sizeof(char), GFP_KERNEL);
+            // TODO verificar krealloc
+            strncpy_from_user(texto, ((texto_t *)arg)->texto, size_string);
+            // TODO verificar strncpy
+            // TODO verificar adicionar terminador
+            printk("Dentro do SET_TEXTO recebido: %s\n",((texto_t *)arg)->texto);
+
+
+            // texto = krealloc(texto,256*sizeof(char), GFP_KERNEL);
+            //  if (copy_from_user(&t, (texto_t *)arg, sizeof(texto_t)))
+            // {
+            //     return -EACCES;
+            // }
+
+            // if (copy_from_user(texto, t.texto, 256))
+            // {
+            //     return -EACCES;
+            // }
+            printk("Dentro do SET_TEXTO gravado: %s\n",texto);
+            break;
+            
+        case READ_TEXTO:
+            // t.texto = texto;
+            printk("%s",texto);
+
+            char* antigo =((texto_t *)arg)->texto;
+            // if (copy_to_user((texto_t *)arg, &t, sizeof(texto_t)))
+            // {
+            //     return -EACCES;
+            // }
+            // if (copy_to_user(((texto_t *)arg)->texto, t.texto, strlen(t.texto)*sizeof(char)))
+            if (copy_to_user(((texto_t *)arg)->texto, t.texto, 256))
+            {
+                return -EACCES;
+            }
+
+
+            break;
+
         default:
             return -EINVAL;
     }
@@ -70,11 +122,7 @@ static struct file_operations query_fops =
     .owner = THIS_MODULE,
     .open = my_open,
     .release = my_close,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35))
-    .ioctl = my_ioctl
-#else
     .unlocked_ioctl = my_ioctl
-#endif
 };
  
 static int __init query_ioctl_init(void)
@@ -124,5 +172,4 @@ module_init(query_ioctl_init);
 module_exit(query_ioctl_exit);
  
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Anil Kumar Pugalia <email_at_sarika-pugs_dot_com>");
 MODULE_DESCRIPTION("Query ioctl() Char Driver");

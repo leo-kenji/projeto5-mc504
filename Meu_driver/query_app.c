@@ -4,7 +4,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/ioctl.h>
- 
+#include <stdlib.h>
+
 #include "query_ioctl.h"
  
 void get_vars(int fd)
@@ -53,6 +54,40 @@ void set_vars(int fd)
     }
 }
  
+void set_texto(int fd)
+{
+
+    texto_t q;
+    char *t = malloc(100);
+ 
+    // printf("Enter text: ");
+    // scanf("%s", t);
+    // // getchar();
+    // q.texto = t;
+    char texto[] = "Bom dia!";
+    q.texto = texto;
+    printf("Dentro do app: %s\n",q.texto);
+    
+    if (ioctl(fd, SET_TEXTO, &q) == -1)
+    {
+        perror("query_apps ioctl set texto");
+    }
+}
+
+
+void get_texto(int fd)
+{
+    texto_t q;
+    q.texto = malloc(256);
+
+    
+    if (ioctl(fd, READ_TEXTO, &q) == -1)
+    {
+        perror("query_apps ioctl set texto");
+    }
+    printf("%s",q.texto);
+}
+
 int main(int argc, char *argv[])
 {
     char *file_name = "/dev/query";
@@ -61,7 +96,9 @@ int main(int argc, char *argv[])
     {
         e_get,
         e_clr,
-        e_set
+        e_set,
+        e_get_t,
+        e_set_t
     } option;
  
     if (argc == 1)
@@ -82,15 +119,24 @@ int main(int argc, char *argv[])
         {
             option = e_set;
         }
+
+        else if (strcmp(argv[1], "-gt") == 0)
+        {
+            option = e_get_t;
+        }
+        else if (strcmp(argv[1], "-st") == 0)
+        {
+            option = e_set_t;
+        }
         else
         {
-            fprintf(stderr, "Usage: %s [-g | -c | -s]\n", argv[0]);
+            fprintf(stderr, "Usage: %s [-g | -c | -s | -st]\n", argv[0]);
             return 1;
         }
     }
     else
     {
-        fprintf(stderr, "Usage: %s [-g | -c | -s]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [-g | -c | -s | -st]\n", argv[0]);
         return 1;
     }
     fd = open(file_name, O_RDWR);
@@ -110,6 +156,12 @@ int main(int argc, char *argv[])
             break;
         case e_set:
             set_vars(fd);
+            break;
+            case e_get_t:
+            get_texto(fd);
+            break;
+        case e_set_t:
+            set_texto(fd);
             break;
         default:
             break;
